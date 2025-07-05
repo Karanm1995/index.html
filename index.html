@@ -6,31 +6,28 @@
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 30px;
       max-width: 800px;
       margin: auto;
-      padding: 20px;
-      background: #f3f3f3;
     }
     h1 {
-      color: #444;
       text-align: center;
+      color: #333;
     }
     textarea {
       width: 100%;
       height: 150px;
-      margin: 10px 0;
-      padding: 10px;
       font-size: 18px;
-      line-height: 1.5;
+      margin-top: 10px;
+      padding: 10px;
+      box-sizing: border-box;
     }
     button {
       padding: 10px 20px;
       font-size: 18px;
-      margin: 10px 0;
+      margin: 10px 5px 20px 0;
       cursor: pointer;
-    }
-    #output {
-      font-family: 'Kruti Dev 010', 'Mangal', sans-serif;
     }
   </style>
 </head>
@@ -38,91 +35,51 @@
 
 <h1>Unicode to Kruti Dev 010 Converter</h1>
 
-<label>Type in Unicode Hindi:</label>
-<textarea id="input" placeholder="aap kaha rehte ho"></textarea>
+<label>Type in Hindi (Unicode):</label>
+<textarea id="input" placeholder="उदाहरण: किसान खेत में गया"></textarea>
 
-<button onclick="convert()">Convert</button>
+<button onclick="convertText()">Convert</button>
 
-<label>Kurti Dev Output:</label>
+<label>Output (Kurti Dev 010):</label>
 <textarea id="output" readonly></textarea>
 
-<button onclick="copyOutput()">Copy</button>
-
 <script>
-function convert() {
-  let text = document.getElementById('input').value;
+function convertText() {
+  let unicodeText = document.getElementById("input").value;
 
-  // Basic rules for matra / akshar replacement
-  let rules = [
-    ['क्', 'd'],
-    ['क', 'd'],
-    ['ख', '[k'],
-    ['ग', 'x'],
-    ['घ', 'X'],
-    ['ङ', 'vks'],
-    ['च', 'p'],
-    ['छ', 'P'],
-    ['ज', 't'],
-    ['झ', 'T'],
-    ['ञ', 'N'],
-    ['ट', 'V'],
-    ['ठ', 'B'],
-    ['ड', 'M'],
-    ['ढ', '<'],
-    ['ण', '.k'],
-    ['त', 'r'],
-    ['थ', 'F'],
-    ['द', 'n'],
-    ['ध', '/k'],
-    ['न', 'u'],
-    ['प', 'i'],
-    ['फ', 'Q'],
-    ['ब', 'c'],
-    ['भ', 'H'],
-    ['म', 'e'],
-    ['य', ';'],
-    ['र', 'j'],
-    ['ल', 'y'],
-    ['व', 'o'],
-    ['श', "'k"],
-    ['ष', '"k'],
-    ['स', 'l'],
-    ['ह', 'g'],
-    ['़', '`'],
-    ['ा', 'k'],
-    ['ि', 'f'],
-    ['ी', 'h'],
-    ['ु', 'q'],
-    ['ू', 'w'],
-    ['े', 's'],
-    ['ै', 'S'],
-    ['ो', 'ks'],
-    ['ौ', 'kS'],
-    ['ं', 'M'],
-    ['ः', ':'],
-    ['ँ', '±'],
-    ['्', ''],
-    ['ृ', 'Z'],
-    [' ', ' ']
+  // Normalization
+  unicodeText = unicodeText.normalize("NFC");
+
+  // Reposition 'ि' matra before consonant
+  unicodeText = unicodeText.replace(/([क-ह]्?)(ि)/g, 'f$1');
+
+  // Main conversion rules (simplified + effective mapping)
+  const conversions = [
+    ['क्क', '²'],
+    ['क्त', '™'],
+    ['क्र', '‹'],
+    ['क', 'd'], ['ख', '[k'], ['ग', 'x'], ['घ', 'X'], ['ङ', 'vks'],
+    ['च', 'p'], ['छ', 'P'], ['ज', 't'], ['झ', 'T'], ['ञ', 'N'],
+    ['ट', 'V'], ['ठ', 'B'], ['ड', 'M'], ['ढ', '<'], ['ण', '.k'],
+    ['त', 'r'], ['थ', 'F'], ['द', 'n'], ['ध', '/k'], ['न', 'u'],
+    ['प', 'i'], ['फ', 'Q'], ['ब', 'c'], ['भ', 'H'], ['म', 'e'],
+    ['य', ';'], ['र', 'j'], ['ल', 'y'], ['व', 'o'],
+    ['श', "'k"], ['ष', '"k'], ['स', 'l'], ['ह', 'g'],
+    ['क्ष', '{k'], ['त्र', '≈'], ['ज्ञ', 'K'],
+    ['अ', 'v'], ['आ', 'vk'], ['इ', 'b'], ['ई', 'bZ'], ['उ', 'm'], ['ऊ', 'Å'],
+    ['ऋ', 'Z'], ['ए', ','], ['ऐ', '_'], ['ओ', 'vkS'], ['औ', 'vks'],
+    ['ा', 'k'], ['ि', 'f'], ['ी', 'h'], ['ु', 'q'], ['ू', 'w'],
+    ['े', 's'], ['ै', 'S'], ['ो', 'ks'], ['ौ', 'kS'],
+    ['ं', 'M'], ['ः', ':'], ['ँ', '±'],
+    ['़', '`'], ['्', ''], [' ', ' ']
   ];
 
-  // Fix for post-base matras like 'ि' coming before consonant
-  text = text.replace(/([क-ह]्?)(ि)/g, 'f$1');
-
-  // Apply rules
-  for (let [unicodeChar, krutiDevChar] of rules) {
-    let regex = new RegExp(unicodeChar, 'g');
-    text = text.replace(regex, krutiDevChar);
+  for (let [uni, kru] of conversions) {
+    let re = new RegExp(uni, 'g');
+    unicodeText = unicodeText.replace(re, kru);
   }
 
-  document.getElementById('output').value = text;
-}
-
-function copyOutput() {
-  const output = document.getElementById("output");
-  output.select();
-  document.execCommand("copy");
-  alert("Copied to clipboard!");
+  document.getElementById("output").value = unicodeText;
 }
 </script>
 
